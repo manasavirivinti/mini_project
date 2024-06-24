@@ -20,9 +20,11 @@ def build_and_train_model(X_train, y_train, dimensions):
     return model
 
 def integrate_gjo_with_model(model, best_solution, X_train, y_train):
-    # Use best_solution from GJO to initialize model weights (if applicable)
-    # Example: if best_solution represents weights for the first layer
+    # Use best_solution from GJO to initialize model weights
     initial_weights = model.layers[0].get_weights()
+    print(f"Shape of initial weights[0]: {initial_weights[0].shape}")
+    print(f"Size of best_solution: {best_solution.size}")
+
     initial_weights[0] = best_solution.reshape(initial_weights[0].shape)
     model.layers[0].set_weights(initial_weights)
 

@@ -2,17 +2,17 @@ import numpy as np
 
 # Define fitness function
 def fitness_function(solution, data, labels):
-    # Example fitness function: accuracy of simple linear model
-    predictions = (data @ solution.T > 0.5).astype(int)
+    weights = solution.reshape((15, 64))  # Assuming solution is flattened weights
+    predictions = (data @ weights.T > 0.5).astype(int)
     accuracy = np.mean(predictions == labels)
     return accuracy
 
 # Initialize population
-def initialize_population(pop_size, dimensions):
-    return np.random.rand(pop_size, dimensions)
+def initialize_population(pop_size, weight_shape):
+    return np.random.rand(pop_size, np.prod(weight_shape))
 
 # Update rules for GJO algorithm
-def update_population(population, alpha, beta, delta, fitness_function, data, labels):
+def update_population(population, alpha, beta, delta, alpha_fitness, beta_fitness, delta_fitness):
     new_population = np.copy(population)
     for i in range(len(population)):
         r1, r2 = np.random.rand(), np.random.rand()
@@ -29,28 +29,36 @@ def update_population(population, alpha, beta, delta, fitness_function, data, la
     
     return new_population
 
-def run_gjo(X_train, y_train, dimensions):
+def run_gjo(X_train, y_train, weight_shape):
     # Hyperparameters
     pop_size = 50
     iterations = 100
 
     # Initialize population
-    population = initialize_population(pop_size, dimensions)
-    alpha, beta, delta = population[0], population[1], population[2]
+    population = initialize_population(pop_size, weight_shape)
+
+    # Initialize alpha, beta, delta and their fitness values
+    alpha = population[0]
+    beta = population[1]
+    delta = population[2]
+    
+    alpha_fitness = fitness_function(alpha, X_train, y_train)
+    beta_fitness = fitness_function(beta, X_train, y_train)
+    delta_fitness = fitness_function(delta, X_train, y_train)
 
     # Optimization loop
     for iteration in range(iterations):
         for i in range(pop_size):
             fitness = fitness_function(population[i], X_train, y_train)
-            if fitness > fitness_function(alpha, X_train, y_train):
-                alpha = population[i]
-            elif fitness > fitness_function(beta, X_train, y_train):
-                beta = population[i]
-            elif fitness > fitness_function(delta, X_train, y_train):
-                delta = population[i]
+            if fitness > alpha_fitness:
+                alpha, alpha_fitness = population[i], fitness
+            elif fitness > beta_fitness:
+                beta, beta_fitness = population[i], fitness
+            elif fitness > delta_fitness:
+                delta, delta_fitness = population[i], fitness
         
-        # Update population
-        population = update_population(population, alpha, beta, delta, fitness_function, X_train, y_train)
+        # Update population based on alpha, beta, delta
+        population = update_population(population, alpha, beta, delta, alpha_fitness, beta_fitness, delta_fitness)
 
     best_solution = alpha  # Best solution found
     return best_solution
