@@ -1,11 +1,28 @@
 import numpy as np
 
-# Define fitness function
-def fitness_function(solution, data, labels):
-    weights = solution.reshape((15, 64))  # Assuming solution is flattened weights
-    predictions = (data @ weights.T > 0.5).astype(int)
-    accuracy = np.mean(predictions == labels)
-    return accuracy
+def fitness_function(weights, data, labels):
+    print("Shape of data:", data.shape)
+    print("Shape of weights before reshape:", weights.shape)
+    
+    # Reshape weights to match input features
+    weights = weights.reshape((data.shape[1], -1))
+    
+    print("Shape of weights after reshape:", weights.shape)
+    
+    # Perform prediction using linear combination followed by sigmoid
+    predictions = 1 / (1 + np.exp(-(data @ weights)))
+    
+    # Reshape predictions to match labels shape
+    predictions = predictions.reshape(-1, 64)  # Assuming 64 classes or outputs
+    
+    # Convert predictions to binary classification (threshold = 0.5)
+    predictions = (predictions > 0.5).astype(int)
+    
+    # Convert predictions to class labels (e.g., using argmax for multi-class)
+    predictions = np.argmax(predictions, axis=1)
+    
+    return np.mean(predictions == labels)
+
 
 # Initialize population
 def initialize_population(pop_size, weight_shape):
